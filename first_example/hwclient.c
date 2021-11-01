@@ -4,12 +4,14 @@
 #include <stdio.h>
 #include <unistd.h>
 
-int main (void)
+int main (int argc, char *argv[])
 {
-    printf ("Connecting to hello world server...\n");
+    if( argc == 2 ) {
+      printf ("Connecting to hello world server...\n");
     void *context = zmq_ctx_new ();
     void *requester = zmq_socket (context, ZMQ_REQ);
-    zmq_connect (requester, "tcp://172.17.0.2:5555");
+    char server[100] = "tcp://";
+    zmq_connect (requester, strcat(strcat(server,argv[1]),":5555"));
 
     int request_nbr;
     for (request_nbr = 0; request_nbr != 10; request_nbr++) {
@@ -21,5 +23,13 @@ int main (void)
     }
     zmq_close (requester);
     zmq_ctx_destroy (context);
+   }
+   else if( argc > 2 ) {
+      printf("Too many arguments supplied.\n");
+   }
+   else {
+      printf("One argument expected.\n");
+   }
+    
     return 0;
 }
