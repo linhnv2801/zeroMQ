@@ -1,0 +1,8 @@
+sudo docker pull fortunate281/coordinator01:demo_zeromq
+sudo docker tag  fortunate281/coordinator01:demo_zeromq demo_zeromq_broker
+sudo docker tag  fortunate281/coordinator01:demo_zeromq demo_zeromq_worker
+sudo docker tag  fortunate281/coordinator01:demo_zeromq demo_zeromq_client
+sudo docker inspect demo_zeromq_broker -> get ip
+sudo docker run -it demo_zeromq_broker -> ./home/Github/zeroMQ/Pub-Sub/rrbroker
+sudo docker run -it demo_zeromq_worker -> ./home/Github/zeroMQ/Pub-Sub/rrworker ip_demo_zeromq_broker
+sudo docker run -it demo_zeromq_client -> ./home/Github/zeroMQ/Pub-Sub/rrclient ip_demo_zeromq_broker
