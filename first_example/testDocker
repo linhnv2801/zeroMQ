@@ -1,0 +1,5 @@
+sudo docker pull fortunate281/coordinator01:demo_zeromq
+sudo docker tag  fortunate281/coordinator01:demo_zeromq demo_zeromq_client
+sudo docker tag  fortunate281/coordinator01:demo_zeromq demo_zeromq_server
+sudo docker run -it demo_zeromq_server -> ./hwserver
+sudo docker run -it demo_zeromq_client -> ./hwclient ip_of_demo_zeromq_server
