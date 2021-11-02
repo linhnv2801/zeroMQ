@@ -1,0 +1,7 @@
+:%s/zsocket_new/zmq_socket/
+:%s/zsocket_bind/zsock_bind/
+:%s/zctx_t/zrex_t/
+:%s/zctx_new/zmq_ctx_new/
+:%s/zctx_destroy/zmq_ctx_destroy/
+:%s/zsocket_destroy/zmq_close/
+:%s/zsocket_connect/zmq_connect/
