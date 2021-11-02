@@ -61,7 +61,7 @@ int main (int argc, char *argv [])
 //  of how many servers it's connected to, and a request sequence number:
 
 struct _flclient_t {
-    zctx_t *ctx;        //  Our context wrapper
+    zrex_t *ctx;        //  Our context wrapper
     void *socket;       //  DEALER socket talking to servers
     size_t servers;     //  How many servers we have connected to
     uint sequence;      //  Number of requests ever sent
@@ -76,8 +76,8 @@ flclient_new (void)
         *self;
 
     self = (flclient_t *) zmalloc (sizeof (flclient_t));
-    self->ctx = zctx_new ();
-    self->socket = zsocket_new (self->ctx, ZMQ_DEALER);
+    self->ctx = zmq_ctx_new ();
+    self->socket = zmq_socket (self->ctx, ZMQ_DEALER);
     return self;
 }
 
@@ -89,7 +89,7 @@ flclient_destroy (flclient_t **self_p)
     assert (self_p);
     if (*self_p) {
         flclient_t *self = *self_p;
-        zctx_destroy (&self->ctx);
+        zmq_ctx_destroy (&self->ctx);
         free (self);
         *self_p = NULL;
     }
@@ -101,7 +101,7 @@ void
 flclient_connect (flclient_t *self, char *endpoint)
 {
     assert (self);
-    zsocket_connect (self->socket, endpoint);
+    zmq_connect (self->socket, endpoint);
     self->servers++;
 }
 

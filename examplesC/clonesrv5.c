@@ -10,7 +10,7 @@ static int s_flush_ttl (zloop_t *loop, int timer_id, void *args);
 
 //  Our server is defined by these properties
 typedef struct {
-    zctx_t *ctx;                //  Context wrapper
+    zrex_t *ctx;                //  Context wrapper
     zhash_t *kvmap;             //  Key-value store
     zloop_t *loop;              //  zloop reactor
     int port;                   //  Main port we're working on
@@ -24,18 +24,18 @@ int main (void)
 {
     clonesrv_t *self = (clonesrv_t *) zmalloc (sizeof (clonesrv_t));
     self->port = 5556;
-    self->ctx = zctx_new ();
+    self->ctx = zmq_ctx_new ();
     self->kvmap = zhash_new ();
     self->loop = zloop_new ();
     zloop_set_verbose (self->loop, false);
 
     //  Set up our clone server sockets
-    self->snapshot  = zsocket_new (self->ctx, ZMQ_ROUTER);
-    zsocket_bind (self->snapshot,  "tcp://*:%d", self->port);
-    self->publisher = zsocket_new (self->ctx, ZMQ_PUB);
-    zsocket_bind (self->publisher, "tcp://*:%d", self->port + 1);
-    self->collector = zsocket_new (self->ctx, ZMQ_PULL);
-    zsocket_bind (self->collector, "tcp://*:%d", self->port + 2);
+    self->snapshot  = zmq_socket (self->ctx, ZMQ_ROUTER);
+    zsock_bind (self->snapshot,  "tcp://*:%d", self->port);
+    self->publisher = zmq_socket (self->ctx, ZMQ_PUB);
+    zsock_bind (self->publisher, "tcp://*:%d", self->port + 1);
+    self->collector = zmq_socket (self->ctx, ZMQ_PULL);
+    zsock_bind (self->collector, "tcp://*:%d", self->port + 2);
 
     //  Register our handlers with reactor
     zmq_pollitem_t poller = { 0, 0, ZMQ_POLLIN };
@@ -50,7 +50,7 @@ int main (void)
 
     zloop_destroy (&self->loop);
     zhash_destroy (&self->kvmap);
-    zctx_destroy (&self->ctx);
+    zmq_ctx_destroy (&self->ctx);
     free (self);
     return 0;
 }

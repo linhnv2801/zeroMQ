@@ -6,14 +6,14 @@
 int main (void)
 {
     //  Prepare our context and subscriber
-    zctx_t *ctx = zctx_new ();
-    void *snapshot = zsocket_new (ctx, ZMQ_DEALER);
-    zsocket_connect (snapshot, "tcp://localhost:5556");
-    void *subscriber = zsocket_new (ctx, ZMQ_SUB);
+    zrex_t *ctx = zmq_ctx_new ();
+    void *snapshot = zmq_socket (ctx, ZMQ_DEALER);
+    zmq_connect (snapshot, "tcp://localhost:5556");
+    void *subscriber = zmq_socket (ctx, ZMQ_SUB);
     zsocket_set_subscribe (subscriber, "");
-    zsocket_connect (subscriber, "tcp://localhost:5557");
-    void *publisher = zsocket_new (ctx, ZMQ_PUSH);
-    zsocket_connect (publisher, "tcp://localhost:5558");
+    zmq_connect (subscriber, "tcp://localhost:5557");
+    void *publisher = zmq_socket (ctx, ZMQ_PUSH);
+    zmq_connect (publisher, "tcp://localhost:5558");
 
     zhash_t *kvmap = zhash_new ();
     srandom ((unsigned) time (NULL));
@@ -74,6 +74,6 @@ int main (void)
     }
     printf (" Interrupted\n%d messages in\n", (int) sequence);
     zhash_destroy (&kvmap);
-    zctx_destroy (&ctx);
+    zmq_ctx_destroy (&ctx);
     return 0;
 }

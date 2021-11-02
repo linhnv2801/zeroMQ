@@ -25,7 +25,7 @@ static int
 
 //  Our server is defined by these properties
 typedef struct {
-    zctx_t *ctx;                //  Context wrapper
+    zrex_t *ctx;                //  Context wrapper
     zhash_t *kvmap;             //  Key-value store
     bstar_t *bstar;             //  Bstar reactor core
     int64_t sequence;           //  How many updates we're at
@@ -84,21 +84,21 @@ int main (int argc, char *argv [])
     if (self->primary)
         self->kvmap = zhash_new ();
 
-    self->ctx = zctx_new ();
+    self->ctx = zmq_ctx_new ();
     self->pending = zlist_new ();
     bstar_set_verbose (self->bstar, true);
 
     //  Set up our clone server sockets
-    self->publisher = zsocket_new (self->ctx, ZMQ_PUB);
-    self->collector = zsocket_new (self->ctx, ZMQ_SUB);
+    self->publisher = zmq_socket (self->ctx, ZMQ_PUB);
+    self->collector = zmq_socket (self->ctx, ZMQ_SUB);
     zsocket_set_subscribe (self->collector, "");
-    zsocket_bind (self->publisher, "tcp://*:%d", self->port + 1);
-    zsocket_bind (self->collector, "tcp://*:%d", self->port + 2);
+    zsock_bind (self->publisher, "tcp://*:%d", self->port + 1);
+    zsock_bind (self->collector, "tcp://*:%d", self->port + 2);
 
     //  Set up our own clone client interface to peer
-    self->subscriber = zsocket_new (self->ctx, ZMQ_SUB);
+    self->subscriber = zmq_socket (self->ctx, ZMQ_SUB);
     zsocket_set_subscribe (self->subscriber, "");
-    zsocket_connect (self->subscriber,
+    zmq_connect (self->subscriber,
                      "tcp://localhost:%d", self->peer + 1);
 
     //  .split main task body
@@ -128,7 +128,7 @@ int main (int argc, char *argv [])
     zlist_destroy (&self->pending);
     bstar_destroy (&self->bstar);
     zhash_destroy (&self->kvmap);
-    zctx_destroy (&self->ctx);
+    zmq_ctx_destroy (&self->ctx);
     free (self);
 
     return 0;
@@ -358,8 +358,8 @@ s_subscriber (zloop_t *loop, zmq_pollitem_t *poller, void *args)
     //  Get state snapshot if necessary
     if (self->kvmap == NULL) {
         self->kvmap = zhash_new ();
-        void *snapshot = zsocket_new (self->ctx, ZMQ_DEALER);
-        zsocket_connect (snapshot, "tcp://localhost:%d", self->peer);
+        void *snapshot = zmq_socket (self->ctx, ZMQ_DEALER);
+        zmq_connect (snapshot, "tcp://localhost:%d", self->peer);
         zclock_log ("I: asking for snapshot from: tcp://localhost:%d",
                     self->peer);
         zstr_sendm (snapshot, "ICANHAZ?");
@@ -376,7 +376,7 @@ s_subscriber (zloop_t *loop, zmq_pollitem_t *poller, void *args)
             kvmsg_store (&kvmsg, self->kvmap);
         }
         zclock_log ("I: received snapshot=%d", (int) self->sequence);
-        zsocket_destroy (self->ctx, snapshot);
+        zmq_close (self->ctx, snapshot);
     }
     //  Find and remove update off pending list
     kvmsg_t *kvmsg = kvmsg_recv (poller->socket);

@@ -6,11 +6,11 @@
 #define MAX_RETRIES         3       //  Before we abandon
 
 static zmsg_t *
-s_try_request (zctx_t *ctx, char *endpoint, zmsg_t *request)
+s_try_request (zrex_t *ctx, char *endpoint, zmsg_t *request)
 {
     printf ("I: trying echo service at %s...\n", endpoint);
-    void *client = zsocket_new (ctx, ZMQ_REQ);
-    zsocket_connect (client, endpoint);
+    void *client = zmq_socket (ctx, ZMQ_REQ);
+    zmq_connect (client, endpoint);
 
     //  Send request, wait safely for reply
     zmsg_t *msg = zmsg_dup (request);
@@ -22,7 +22,7 @@ s_try_request (zctx_t *ctx, char *endpoint, zmsg_t *request)
         reply = zmsg_recv (client);
 
     //  Close socket in any case, we're done with it now
-    zsocket_destroy (ctx, client);
+    zmq_close (ctx, client);
     return reply;
 }
 
@@ -33,7 +33,7 @@ s_try_request (zctx_t *ctx, char *endpoint, zmsg_t *request)
 
 int main (int argc, char *argv [])
 {
-    zctx_t *ctx = zctx_new ();
+    zrex_t *ctx = zmq_ctx_new ();
     zmsg_t *request = zmsg_new ();
     zmsg_addstr (request, "Hello world");
     zmsg_t *reply = NULL;
@@ -69,6 +69,6 @@ int main (int argc, char *argv [])
 
     zmsg_destroy (&request);
     zmsg_destroy (&reply);
-    zctx_destroy (&ctx);
+    zmq_ctx_destroy (&ctx);
     return 0;
 }

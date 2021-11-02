@@ -127,31 +127,31 @@ int main (int argc, char *argv [])
     //  Arguments can be either of:
     //      -p  primary server, at tcp://localhost:5001
     //      -b  backup server, at tcp://localhost:5002
-    zctx_t *ctx = zctx_new ();
-    void *statepub = zsocket_new (ctx, ZMQ_PUB);
-    void *statesub = zsocket_new (ctx, ZMQ_SUB);
+    zrex_t *ctx = zmq_ctx_new ();
+    void *statepub = zmq_socket (ctx, ZMQ_PUB);
+    void *statesub = zmq_socket (ctx, ZMQ_SUB);
     zsocket_set_subscribe (statesub, "");
-    void *frontend = zsocket_new (ctx, ZMQ_ROUTER);
+    void *frontend = zmq_socket (ctx, ZMQ_ROUTER);
     bstar_t fsm = { 0 };
 
     if (argc == 2 && streq (argv [1], "-p")) {
         printf ("I: Primary active, waiting for backup (passive)\n");
-        zsocket_bind (frontend, "tcp://*:5001");
-        zsocket_bind (statepub, "tcp://*:5003");
-        zsocket_connect (statesub, "tcp://localhost:5004");
+        zsock_bind (frontend, "tcp://*:5001");
+        zsock_bind (statepub, "tcp://*:5003");
+        zmq_connect (statesub, "tcp://localhost:5004");
         fsm.state = STATE_PRIMARY;
     }
     else
     if (argc == 2 && streq (argv [1], "-b")) {
         printf ("I: Backup passive, waiting for primary (active)\n");
-        zsocket_bind (frontend, "tcp://*:5002");
-        zsocket_bind (statepub, "tcp://*:5004");
-        zsocket_connect (statesub, "tcp://localhost:5003");
+        zsock_bind (frontend, "tcp://*:5002");
+        zsock_bind (statepub, "tcp://*:5004");
+        zmq_connect (statesub, "tcp://localhost:5003");
         fsm.state = STATE_BACKUP;
     }
     else {
         printf ("Usage: bstarsrv { -p | -b }\n");
-        zctx_destroy (&ctx);
+        zmq_ctx_destroy (&ctx);
         exit (0);
     }
     //  .split handling socket input
@@ -204,6 +204,6 @@ int main (int argc, char *argv [])
         printf ("W: interrupted\n");
 
     //  Shutdown sockets and context
-    zctx_destroy (&ctx);
+    zmq_ctx_destroy (&ctx);
     return 0;
 }

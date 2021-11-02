@@ -9,7 +9,7 @@
 
 int main (void)
 {
-    zctx_t *ctx = zctx_new ();
+    zrex_t *ctx = zmq_ctx_new ();
     udp_t *udp = udp_new (PING_PORT_NUMBER);
     
     byte buffer [PING_MSG_SIZE];
@@ -38,6 +38,6 @@ int main (void)
         }
     }
     udp_destroy (&udp);
-    zctx_destroy (&ctx);
+    zmq_ctx_destroy (&ctx);
     return 0;
 }

@@ -15,7 +15,7 @@
 //  The broker class defines a single broker instance:
 
 typedef struct {
-    zctx_t *ctx;                //  Our context
+    zrex_t *ctx;                //  Our context
     void *socket;               //  Socket for clients & workers
     int verbose;                //  Print activity to stdout
     char *endpoint;             //  Broker binds to this endpoint
@@ -88,8 +88,8 @@ s_broker_new (int verbose)
     broker_t *self = (broker_t *) zmalloc (sizeof (broker_t));
 
     //  Initialize broker state
-    self->ctx = zctx_new ();
-    self->socket = zsocket_new (self->ctx, ZMQ_ROUTER);
+    self->ctx = zmq_ctx_new ();
+    self->socket = zmq_socket (self->ctx, ZMQ_ROUTER);
     self->verbose = verbose;
     self->services = zhash_new ();
     self->workers = zhash_new ();
@@ -104,7 +104,7 @@ s_broker_destroy (broker_t **self_p)
     assert (self_p);
     if (*self_p) {
         broker_t *self = *self_p;
-        zctx_destroy (&self->ctx);
+        zmq_ctx_destroy (&self->ctx);
         zhash_destroy (&self->services);
         zhash_destroy (&self->workers);
         zlist_destroy (&self->waiting);
@@ -121,7 +121,7 @@ s_broker_destroy (broker_t **self_p)
 void
 s_broker_bind (broker_t *self, char *endpoint)
 {
-    zsocket_bind (self->socket, endpoint);
+    zsock_bind (self->socket, endpoint);
     zclock_log ("I: MDP broker/0.2.0 is active at %s", endpoint);
 }
 

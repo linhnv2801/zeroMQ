@@ -7,7 +7,7 @@
 //  We access these properties only via class methods
 
 struct _mdcli_t {
-    zctx_t *ctx;                //  Our context
+    zrex_t *ctx;                //  Our context
     char *broker;
     void *client;               //  Socket to broker
     int verbose;                //  Print activity to stdout
@@ -21,8 +21,8 @@ struct _mdcli_t {
 void s_mdcli_connect_to_broker (mdcli_t *self)
 {
     if (self->client)
-        zsocket_destroy (self->ctx, self->client);
-    self->client = zsocket_new (self->ctx, ZMQ_DEALER);
+        zmq_close (self->ctx, self->client);
+    self->client = zmq_socket (self->ctx, ZMQ_DEALER);
     zmq_connect (self->client, self->broker);
     if (self->verbose)
         zclock_log ("I: connecting to broker at %s...", self->broker);
@@ -40,7 +40,7 @@ mdcli_new (char *broker, int verbose)
     assert (broker);
 
     mdcli_t *self = (mdcli_t *) zmalloc (sizeof (mdcli_t));
-    self->ctx = zctx_new ();
+    self->ctx = zmq_ctx_new ();
     self->broker = strdup (broker);
     self->verbose = verbose;
     self->timeout = 2500;           //  msecs
@@ -57,7 +57,7 @@ mdcli_destroy (mdcli_t **self_p)
     assert (self_p);
     if (*self_p) {
         mdcli_t *self = *self_p;
-        zctx_destroy (&self->ctx);
+        zmq_ctx_destroy (&self->ctx);
         free (self->broker);
         free (self);
         *self_p = NULL;

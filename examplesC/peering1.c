@@ -16,20 +16,20 @@ int main (int argc, char *argv [])
     printf ("I: preparing broker at %s...\n", self);
     srandom ((unsigned) time (NULL));
 
-    zctx_t *ctx = zctx_new ();
+    zrex_t *ctx = zmq_ctx_new ();
     
     //  Bind state backend to endpoint
-    void *statebe = zsocket_new (ctx, ZMQ_PUB);
-    zsocket_bind (statebe, "ipc://%s-state.ipc", self);
+    void *statebe = zmq_socket (ctx, ZMQ_PUB);
+    zsock_bind (statebe, "ipc://%s-state.ipc", self);
     
     //  Connect statefe to all peers
-    void *statefe = zsocket_new (ctx, ZMQ_SUB);
+    void *statefe = zmq_socket (ctx, ZMQ_SUB);
     zsocket_set_subscribe (statefe, "");
     int argn;
     for (argn = 2; argn < argc; argn++) {
         char *peer = argv [argn];
         printf ("I: connecting to state backend at '%s'\n", peer);
-        zsocket_connect (statefe, "ipc://%s-state.ipc", peer);
+        zmq_connect (statefe, "ipc://%s-state.ipc", peer);
     }
     //  .split main loop
     //  The main loop sends out status messages to peers, and collects
@@ -57,6 +57,6 @@ int main (int argc, char *argv [])
             zstr_sendf (statebe, "%d", randof (10));
         }
     }
-    zctx_destroy (&ctx);
+    zmq_ctx_destroy (&ctx);
     return EXIT_SUCCESS;
 }

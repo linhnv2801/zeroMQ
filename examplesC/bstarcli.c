@@ -7,14 +7,14 @@
 
 int main (void)
 {
-    zctx_t *ctx = zctx_new ();
+    zrex_t *ctx = zmq_ctx_new ();
 
     char *server [] = { "tcp://localhost:5001", "tcp://localhost:5002" };
     uint server_nbr = 0;
 
     printf ("I: connecting to server at %s...\n", server [server_nbr]);
-    void *client = zsocket_new (ctx, ZMQ_REQ);
-    zsocket_connect (client, server [server_nbr]);
+    void *client = zmq_socket (ctx, ZMQ_REQ);
+    zmq_connect (client, server [server_nbr]);
 
     int sequence = 0;
     while (!zctx_interrupted) {
@@ -54,19 +54,19 @@ int main (void)
                 printf ("W: no response from server, failing over\n");
                 
                 //  Old socket is confused; close it and open a new one
-                zsocket_destroy (ctx, client);
+                zmq_close (ctx, client);
                 server_nbr = (server_nbr + 1) % 2;
                 zclock_sleep (SETTLE_DELAY);
                 printf ("I: connecting to server at %s...\n",
                         server [server_nbr]);
-                client = zsocket_new (ctx, ZMQ_REQ);
-                zsocket_connect (client, server [server_nbr]);
+                client = zmq_socket (ctx, ZMQ_REQ);
+                zmq_connect (client, server [server_nbr]);
 
                 //  Send request again, on new socket
                 zstr_send (client, request);
             }
         }
     }
-    zctx_destroy (&ctx);
+    zmq_ctx_destroy (&ctx);
     return 0;
 }

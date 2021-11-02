@@ -11,13 +11,13 @@
 //  Structure of our class
 
 typedef struct {
-    zctx_t *ctx;                //  Our context wrapper
+    zrex_t *ctx;                //  Our context wrapper
     void *pipe;                 //  Pipe through to agent
 } interface_t;
 
 //  This is the thread that handles our real interface class
 static void
-    interface_agent (void *args, zctx_t *ctx, void *pipe);
+    interface_agent (void *args, zrex_t *ctx, void *pipe);
 
 //  .split constructor and destructor
 //  Here are the constructor and destructor for the interface class.
@@ -31,7 +31,7 @@ interface_new (void)
         *self;
 
     self = (interface_t *) zmalloc (sizeof (interface_t));
-    self->ctx = zctx_new ();
+    self->ctx = zmq_ctx_new ();
     self->pipe = zthread_fork (self->ctx, interface_agent, NULL);
     return self;
 }
@@ -42,7 +42,7 @@ interface_destroy (interface_t **self_p)
     assert (self_p);
     if (*self_p) {
         interface_t *self = *self_p;
-        zctx_destroy (&self->ctx);
+        zmq_ctx_destroy (&self->ctx);
         free (self);
         *self_p = NULL;
     }
@@ -160,7 +160,7 @@ peer_freefn (void *argument)
 //  pass that around cleanly to methods that need it:
 
 typedef struct {
-    zctx_t *ctx;                //  CZMQ context
+    zrex_t *ctx;                //  CZMQ context
     void *pipe;                 //  Pipe back to application
     udp_t *udp;                 //  UDP object
     uuid_t uuid;                //  Our UUID as binary blob
@@ -172,7 +172,7 @@ typedef struct {
 //  interface has one agent object, which implements its background thread:
 
 static agent_t *
-agent_new (zctx_t *ctx, void *pipe)
+agent_new (zrex_t *ctx, void *pipe)
 {
     agent_t *self = (agent_t *) zmalloc (sizeof (agent_t));
     self->ctx = ctx;
@@ -277,7 +277,7 @@ agent_reap_peer (const char *key, void *item, void *argument)
 //  backend UDP handle (beacons):
 
 static void
-interface_agent (void *args, zctx_t *ctx, void *pipe)
+interface_agent (void *args, zrex_t *ctx, void *pipe)
 {
     //  Create agent instance to pass around
     agent_t *self = agent_new (ctx, pipe);

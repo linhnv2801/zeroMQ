@@ -5,11 +5,11 @@
 
 int main (void)
 {
-    zctx_t *context = zctx_new ();
-    void *frontend = zsocket_new (context, ZMQ_SUB);
-    zsocket_connect (frontend, "tcp://*:5557");
-    void *backend = zsocket_new (context, ZMQ_XPUB);
-    zsocket_bind (backend, "tcp://*:5558");
+    zrex_t *context = zmq_ctx_new ();
+    void *frontend = zmq_socket (context, ZMQ_SUB);
+    zmq_connect (frontend, "tcp://*:5557");
+    void *backend = zmq_socket (context, ZMQ_XPUB);
+    zsock_bind (backend, "tcp://*:5558");
 
     //  Subscribe to every single topic from publisher
     zsocket_set_subscribe (frontend, "");
@@ -67,7 +67,7 @@ int main (void)
             zframe_destroy (&frame);
         }
     }
-    zctx_destroy (&context);
+    zmq_ctx_destroy (&context);
     zhash_destroy (&cache);
     return 0;
 }

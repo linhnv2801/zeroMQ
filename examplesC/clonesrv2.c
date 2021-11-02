@@ -4,14 +4,14 @@
 #include "kvsimple.c"
 
 static int s_send_single (const char *key, void *data, void *args);
-static void state_manager (void *args, zctx_t *ctx, void *pipe);
+static void state_manager (void *args, zrex_t *ctx, void *pipe);
 
 int main (void)
 {
     //  Prepare our context and sockets
-    zctx_t *ctx = zctx_new ();
-    void *publisher = zsocket_new (ctx, ZMQ_PUB);
-    zsocket_bind (publisher, "tcp://*:5557");
+    zrex_t *ctx = zmq_ctx_new ();
+    void *publisher = zmq_socket (ctx, ZMQ_PUB);
+    zsock_bind (publisher, "tcp://*:5557");
 
     int64_t sequence = 0;
     srandom ((unsigned) time (NULL));
@@ -30,7 +30,7 @@ int main (void)
         kvmsg_destroy (&kvmsg);
     }
     printf (" Interrupted\n%d messages out\n", (int) sequence);
-    zctx_destroy (&ctx);
+    zmq_ctx_destroy (&ctx);
     return 0;
 }
 
@@ -59,13 +59,13 @@ s_send_single (const char *key, void *data, void *args)
 //  clients for snapshots:
 
 static void
-state_manager (void *args, zctx_t *ctx, void *pipe)
+state_manager (void *args, zrex_t *ctx, void *pipe)
 {
     zhash_t *kvmap = zhash_new ();
 
     zstr_send (pipe, "READY");
-    void *snapshot = zsocket_new (ctx, ZMQ_ROUTER);
-    zsocket_bind (snapshot, "tcp://*:5556");
+    void *snapshot = zmq_socket (ctx, ZMQ_ROUTER);
+    zsock_bind (snapshot, "tcp://*:5556");
 
     zmq_pollitem_t items [] = {
         { pipe, 0, ZMQ_POLLIN, 0 },

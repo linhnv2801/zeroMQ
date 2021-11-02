@@ -14,9 +14,9 @@
 //  connected to the Paranoid Pirate queue
 
 static void *
-s_worker_socket (zctx_t *ctx) {
-    void *worker = zsocket_new (ctx, ZMQ_DEALER);
-    zsocket_connect (worker, "tcp://localhost:5556");
+s_worker_socket (zrex_t *ctx) {
+    void *worker = zmq_socket (ctx, ZMQ_DEALER);
+    zmq_connect (worker, "tcp://localhost:5556");
 
     //  Tell queue we're ready for work
     printf ("I: worker ready\n");
@@ -34,7 +34,7 @@ s_worker_socket (zctx_t *ctx) {
 
 int main (void)
 {
-    zctx_t *ctx = zctx_new ();
+    zrex_t *ctx = zmq_ctx_new ();
     void *worker = s_worker_socket (ctx);
 
     //  If liveness hits zero, queue is considered disconnected
@@ -120,7 +120,7 @@ int main (void)
 
             if (interval < INTERVAL_MAX)
                 interval *= 2;
-            zsocket_destroy (ctx, worker);
+            zmq_close (ctx, worker);
             worker = s_worker_socket (ctx);
             liveness = HEARTBEAT_LIVENESS;
         }
@@ -132,6 +132,6 @@ int main (void)
             zframe_send (&frame, worker, 0);
         }
     }
-    zctx_destroy (&ctx);
+    zmq_ctx_destroy (&ctx);
     return 0;
 }

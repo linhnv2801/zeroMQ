@@ -35,13 +35,13 @@ s_send_single (const char *key, void *data, void *args)
 int main (void)
 {
     //  Prepare our context and sockets
-    zctx_t *ctx = zctx_new ();
-    void *snapshot = zsocket_new (ctx, ZMQ_ROUTER);
-    zsocket_bind (snapshot, "tcp://*:5556");
-    void *publisher = zsocket_new (ctx, ZMQ_PUB);
-    zsocket_bind (publisher, "tcp://*:5557");
-    void *collector = zsocket_new (ctx, ZMQ_PULL);
-    zsocket_bind (collector, "tcp://*:5558");
+    zrex_t *ctx = zmq_ctx_new ();
+    void *snapshot = zmq_socket (ctx, ZMQ_ROUTER);
+    zsock_bind (snapshot, "tcp://*:5556");
+    void *publisher = zmq_socket (ctx, ZMQ_PUB);
+    zsock_bind (publisher, "tcp://*:5557");
+    void *collector = zmq_socket (ctx, ZMQ_PULL);
+    zsock_bind (collector, "tcp://*:5558");
 
     int64_t sequence = 0;
     zhash_t *kvmap = zhash_new ();
@@ -105,7 +105,7 @@ int main (void)
     //  .skip
     printf (" Interrupted\n%d messages handled\n", (int) sequence);
     zhash_destroy (&kvmap);
-    zctx_destroy (&ctx);
+    zmq_ctx_destroy (&ctx);
 
     return 0;
 }

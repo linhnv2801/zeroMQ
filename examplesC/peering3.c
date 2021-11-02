@@ -19,11 +19,11 @@ static char *self;
 static void *
 client_task (void *args)
 {
-    zctx_t *ctx = zctx_new ();
-    void *client = zsocket_new (ctx, ZMQ_REQ);
-    zsocket_connect (client, "ipc://%s-localfe.ipc", self);
-    void *monitor = zsocket_new (ctx, ZMQ_PUSH);
-    zsocket_connect (monitor, "ipc://%s-monitor.ipc", self);
+    zrex_t *ctx = zmq_ctx_new ();
+    void *client = zmq_socket (ctx, ZMQ_REQ);
+    zmq_connect (client, "ipc://%s-localfe.ipc", self);
+    void *monitor = zmq_socket (ctx, ZMQ_PUSH);
+    zmq_connect (monitor, "ipc://%s-monitor.ipc", self);
 
     while (true) {
         sleep (randof (5));
@@ -57,7 +57,7 @@ client_task (void *args)
             }
         }
     }
-    zctx_destroy (&ctx);
+    zmq_ctx_destroy (&ctx);
     return NULL;
 }
 
@@ -69,9 +69,9 @@ client_task (void *args)
 static void *
 worker_task (void *args)
 {
-    zctx_t *ctx = zctx_new ();
-    void *worker = zsocket_new (ctx, ZMQ_REQ);
-    zsocket_connect (worker, "ipc://%s-localbe.ipc", self);
+    zrex_t *ctx = zmq_ctx_new ();
+    void *worker = zmq_socket (ctx, ZMQ_REQ);
+    zmq_connect (worker, "ipc://%s-localbe.ipc", self);
 
     //  Tell broker we're ready for work
     zframe_t *frame = zframe_new (WORKER_READY, 1);
@@ -87,7 +87,7 @@ worker_task (void *args)
         sleep (randof (2));
         zmsg_send (&msg, worker);
     }
-    zctx_destroy (&ctx);
+    zmq_ctx_destroy (&ctx);
     return NULL;
 }
 
@@ -113,42 +113,42 @@ int main (int argc, char *argv [])
     srandom ((unsigned) time (NULL));
 
     //  Prepare local frontend and backend
-    zctx_t *ctx = zctx_new ();
-    void *localfe = zsocket_new (ctx, ZMQ_ROUTER);
-    zsocket_bind (localfe, "ipc://%s-localfe.ipc", self);
+    zrex_t *ctx = zmq_ctx_new ();
+    void *localfe = zmq_socket (ctx, ZMQ_ROUTER);
+    zsock_bind (localfe, "ipc://%s-localfe.ipc", self);
 
-    void *localbe = zsocket_new (ctx, ZMQ_ROUTER);
-    zsocket_bind (localbe, "ipc://%s-localbe.ipc", self);
+    void *localbe = zmq_socket (ctx, ZMQ_ROUTER);
+    zsock_bind (localbe, "ipc://%s-localbe.ipc", self);
 
     //  Bind cloud frontend to endpoint
-    void *cloudfe = zsocket_new (ctx, ZMQ_ROUTER);
+    void *cloudfe = zmq_socket (ctx, ZMQ_ROUTER);
     zsocket_set_identity (cloudfe, self);
-    zsocket_bind (cloudfe, "ipc://%s-cloud.ipc", self);
+    zsock_bind (cloudfe, "ipc://%s-cloud.ipc", self);
     
     //  Connect cloud backend to all peers
-    void *cloudbe = zsocket_new (ctx, ZMQ_ROUTER);
+    void *cloudbe = zmq_socket (ctx, ZMQ_ROUTER);
     zsocket_set_identity (cloudbe, self);
     int argn;
     for (argn = 2; argn < argc; argn++) {
         char *peer = argv [argn];
         printf ("I: connecting to cloud frontend at '%s'\n", peer);
-        zsocket_connect (cloudbe, "ipc://%s-cloud.ipc", peer);
+        zmq_connect (cloudbe, "ipc://%s-cloud.ipc", peer);
     }
     //  Bind state backend to endpoint
-    void *statebe = zsocket_new (ctx, ZMQ_PUB);
-    zsocket_bind (statebe, "ipc://%s-state.ipc", self);
+    void *statebe = zmq_socket (ctx, ZMQ_PUB);
+    zsock_bind (statebe, "ipc://%s-state.ipc", self);
 
     //  Connect state frontend to all peers
-    void *statefe = zsocket_new (ctx, ZMQ_SUB);
+    void *statefe = zmq_socket (ctx, ZMQ_SUB);
     zsocket_set_subscribe (statefe, "");
     for (argn = 2; argn < argc; argn++) {
         char *peer = argv [argn];
         printf ("I: connecting to state backend at '%s'\n", peer);
-        zsocket_connect (statefe, "ipc://%s-state.ipc", peer);
+        zmq_connect (statefe, "ipc://%s-state.ipc", peer);
     }
     //  Prepare monitor socket
-    void *monitor = zsocket_new (ctx, ZMQ_PULL);
-    zsocket_bind (monitor, "ipc://%s-monitor.ipc", self);
+    void *monitor = zmq_socket (ctx, ZMQ_PULL);
+    zsock_bind (monitor, "ipc://%s-monitor.ipc", self);
 
     //  .split start child tasks
     //  After binding and connecting all our sockets, we start our child
@@ -297,6 +297,6 @@ int main (int argc, char *argv [])
         zframe_destroy (&frame);
     }
     zlist_destroy (&workers);
-    zctx_destroy (&ctx);
+    zmq_ctx_destroy (&ctx);
     return EXIT_SUCCESS;
 }

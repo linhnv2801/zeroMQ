@@ -5,9 +5,9 @@
 int main (void)
 {
     //  Prepare our context and publisher socket
-    zctx_t *ctx = zctx_new ();
-    void *publisher = zsocket_new (ctx, ZMQ_PUB);
-    zsocket_bind (publisher, "tcp://*:5556");
+    zrex_t *ctx = zmq_ctx_new ();
+    void *publisher = zmq_socket (ctx, ZMQ_PUB);
+    zsock_bind (publisher, "tcp://*:5556");
     zclock_sleep (200);
 
     zhash_t *kvmap = zhash_new ();
@@ -24,6 +24,6 @@ int main (void)
     }
     printf (" Interrupted\n%d messages out\n", (int) sequence);
     zhash_destroy (&kvmap);
-    zctx_destroy (&ctx);
+    zmq_ctx_destroy (&ctx);
     return 0;
 }

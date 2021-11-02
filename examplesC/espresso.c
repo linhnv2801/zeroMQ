@@ -7,11 +7,11 @@
 //  A and B, then reads and counts incoming messages.
 
 static void
-subscriber_thread (void *args, zctx_t *ctx, void *pipe)
+subscriber_thread (void *args, zrex_t *ctx, void *pipe)
 {
     //  Subscribe to "A" and "B"
-    void *subscriber = zsocket_new (ctx, ZMQ_SUB);
-    zsocket_connect (subscriber, "tcp://localhost:6001");
+    void *subscriber = zmq_socket (ctx, ZMQ_SUB);
+    zmq_connect (subscriber, "tcp://localhost:6001");
     zsocket_set_subscribe (subscriber, "A");
     zsocket_set_subscribe (subscriber, "B");
 
@@ -23,17 +23,17 @@ subscriber_thread (void *args, zctx_t *ctx, void *pipe)
         free (string);
         count++;
     }
-    zsocket_destroy (ctx, subscriber);
+    zmq_close (ctx, subscriber);
 }
 
 //  .split publisher thread
 //  The publisher sends random messages starting with A-J:
 
 static void
-publisher_thread (void *args, zctx_t *ctx, void *pipe)
+publisher_thread (void *args, zrex_t *ctx, void *pipe)
 {
-    void *publisher = zsocket_new (ctx, ZMQ_PUB);
-    zsocket_bind (publisher, "tcp://*:6000");
+    void *publisher = zmq_socket (ctx, ZMQ_PUB);
+    zsock_bind (publisher, "tcp://*:6000");
 
     while (!zctx_interrupted) {
         char string [10];
@@ -50,7 +50,7 @@ publisher_thread (void *args, zctx_t *ctx, void *pipe)
 //  attached child threads. In other languages your mileage may vary:
 
 static void
-listener_thread (void *args, zctx_t *ctx, void *pipe)
+listener_thread (void *args, zrex_t *ctx, void *pipe)
 {
     //  Print everything that arrives on pipe
     while (true) {
@@ -69,19 +69,19 @@ listener_thread (void *args, zctx_t *ctx, void *pipe)
 int main (void)
 {
     //  Start child threads
-    zctx_t *ctx = zctx_new ();
+    zrex_t *ctx = zmq_ctx_new ();
     zthread_fork (ctx, publisher_thread, NULL);
     zthread_fork (ctx, subscriber_thread, NULL);
 
-    void *subscriber = zsocket_new (ctx, ZMQ_XSUB);
-    zsocket_connect (subscriber, "tcp://localhost:6000");
-    void *publisher = zsocket_new (ctx, ZMQ_XPUB);
-    zsocket_bind (publisher, "tcp://*:6001");
+    void *subscriber = zmq_socket (ctx, ZMQ_XSUB);
+    zmq_connect (subscriber, "tcp://localhost:6000");
+    void *publisher = zmq_socket (ctx, ZMQ_XPUB);
+    zsock_bind (publisher, "tcp://*:6001");
     void *listener = zthread_fork (ctx, listener_thread, NULL);
     zmq_proxy (subscriber, publisher, listener);
 
     puts (" interrupted");
     //  Tell attached threads to exit
-    zctx_destroy (&ctx);
+    zmq_ctx_destroy (&ctx);
     return 0;
 }

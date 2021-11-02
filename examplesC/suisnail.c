@@ -10,12 +10,12 @@
 #define MAX_ALLOWED_DELAY   1000    //  msecs
 
 static void
-subscriber (void *args, zctx_t *ctx, void *pipe)
+subscriber (void *args, zrex_t *ctx, void *pipe)
 {
     //  Subscribe to everything
-    void *subscriber = zsocket_new (ctx, ZMQ_SUB);
+    void *subscriber = zmq_socket (ctx, ZMQ_SUB);
     zsocket_set_subscribe (subscriber, "");
-    zsocket_connect (subscriber, "tcp://localhost:5556");
+    zmq_connect (subscriber, "tcp://localhost:5556");
 
     //  Get and process messages
     while (true) {
@@ -42,11 +42,11 @@ subscriber (void *args, zctx_t *ctx, void *pipe)
 //  PUB socket every millisecond:
 
 static void
-publisher (void *args, zctx_t *ctx, void *pipe)
+publisher (void *args, zrex_t *ctx, void *pipe)
 {
     //  Prepare publisher
-    void *publisher = zsocket_new (ctx, ZMQ_PUB);
-    zsocket_bind (publisher, "tcp://*:5556");
+    void *publisher = zmq_socket (ctx, ZMQ_PUB);
+    zsock_bind (publisher, "tcp://*:5556");
 
     while (true) {
         //  Send current clock (msecs) to subscribers
@@ -68,12 +68,12 @@ publisher (void *args, zctx_t *ctx, void *pipe)
 
 int main (void)
 {
-    zctx_t *ctx = zctx_new ();
+    zrex_t *ctx = zmq_ctx_new ();
     void *pubpipe = zthread_fork (ctx, publisher, NULL);
     void *subpipe = zthread_fork (ctx, subscriber, NULL);
     free (zstr_recv (subpipe));
     zstr_send (pubpipe, "break");
     zclock_sleep (100);
-    zctx_destroy (&ctx);
+    zmq_ctx_destroy (&ctx);
     return 0;
 }

@@ -8,10 +8,10 @@
 #define PIPELINE    10
 
 static void
-client_thread (void *args, zctx_t *ctx, void *pipe)
+client_thread (void *args, zrex_t *ctx, void *pipe)
 {
-    void *dealer = zsocket_new (ctx, ZMQ_DEALER);
-    zsocket_connect (dealer, "tcp://127.0.0.1:6000");
+    void *dealer = zmq_socket (ctx, ZMQ_DEALER);
+    zmq_connect (dealer, "tcp://127.0.0.1:6000");
 
     //  Up to this many chunks in transit
     size_t credit = PIPELINE;
@@ -53,15 +53,15 @@ client_thread (void *args, zctx_t *ctx, void *pipe)
 //  reads that chunk and sends it back to the client:
 
 static void
-server_thread (void *args, zctx_t *ctx, void *pipe)
+server_thread (void *args, zrex_t *ctx, void *pipe)
 {
     FILE *file = fopen ("testdata", "r");
     assert (file);
 
-    void *router = zsocket_new (ctx, ZMQ_ROUTER);
+    void *router = zmq_socket (ctx, ZMQ_ROUTER);
     //  We have two parts per message so HWM is PIPELINE * 2
     zsocket_set_hwm (router, PIPELINE * 2);
-    zsocket_bind (router, "tcp://*:6000");
+    zsock_bind (router, "tcp://*:6000");
     while (true) {
         //  First frame in each message is the sender identity
         zframe_t *identity = zframe_recv (router);
@@ -104,7 +104,7 @@ server_thread (void *args, zctx_t *ctx, void *pipe)
 int main (void)
 {
     //  Start child threads
-    zctx_t *ctx = zctx_new ();
+    zrex_t *ctx = zmq_ctx_new ();
     zthread_fork (ctx, server_thread, NULL);
     void *client =
     zthread_fork (ctx, client_thread, NULL);
@@ -112,7 +112,7 @@ int main (void)
     char *string = zstr_recv (client);
     free (string);
     //  Kill server thread
-    zctx_destroy (&ctx);
+    zmq_ctx_destroy (&ctx);
     return 0;
 }
 //  .until

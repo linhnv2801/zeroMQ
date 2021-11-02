@@ -7,15 +7,15 @@
 
 int main (void)
 {
-    zctx_t *ctx = zctx_new ();
-    void *worker = zsocket_new (ctx, ZMQ_REQ);
+    zrex_t *ctx = zmq_ctx_new ();
+    void *worker = zmq_socket (ctx, ZMQ_REQ);
 
     //  Set random identity to make tracing easier
     srandom ((unsigned) time (NULL));
     char identity [10];
     sprintf (identity, "%04X-%04X", randof (0x10000), randof (0x10000));
     zmq_setsockopt (worker, ZMQ_IDENTITY, identity, strlen (identity));
-    zsocket_connect (worker, "tcp://localhost:5556");
+    zmq_connect (worker, "tcp://localhost:5556");
 
     //  Tell broker we're ready for work
     printf ("I: (%s) worker ready\n", identity);
@@ -46,6 +46,6 @@ int main (void)
         sleep (1);              //  Do some heavy work
         zmsg_send (&msg, worker);
     }
-    zctx_destroy (&ctx);
+    zmq_ctx_destroy (&ctx);
     return 0;
 }

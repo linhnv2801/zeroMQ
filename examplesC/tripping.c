@@ -6,10 +6,10 @@
 #include "czmq.h"
 
 static void
-client_task (void *args, zctx_t *ctx, void *pipe)
+client_task (void *args, zrex_t *ctx, void *pipe)
 {
-    void *client = zsocket_new (ctx, ZMQ_DEALER);
-    zsocket_connect (client, "tcp://localhost:5555");
+    void *client = zmq_socket (ctx, ZMQ_DEALER);
+    zmq_connect (client, "tcp://localhost:5555");
     printf ("Setting up test...\n");
     zclock_sleep (100);
 
@@ -46,15 +46,15 @@ client_task (void *args, zctx_t *ctx, void *pipe)
 static void *
 worker_task (void *args)
 {
-    zctx_t *ctx = zctx_new ();
-    void *worker = zsocket_new (ctx, ZMQ_DEALER);
-    zsocket_connect (worker, "tcp://localhost:5556");
+    zrex_t *ctx = zmq_ctx_new ();
+    void *worker = zmq_socket (ctx, ZMQ_DEALER);
+    zmq_connect (worker, "tcp://localhost:5556");
     
     while (true) {
         zmsg_t *msg = zmsg_recv (worker);
         zmsg_send (&msg, worker);
     }
-    zctx_destroy (&ctx);
+    zmq_ctx_destroy (&ctx);
     return NULL;
 }
 
@@ -66,13 +66,13 @@ static void *
 broker_task (void *args)
 {
     //  Prepare our context and sockets
-    zctx_t *ctx = zctx_new ();
-    void *frontend = zsocket_new (ctx, ZMQ_DEALER);
-    zsocket_bind (frontend, "tcp://*:5555");
-    void *backend = zsocket_new (ctx, ZMQ_DEALER);
-    zsocket_bind (backend, "tcp://*:5556");
+    zrex_t *ctx = zmq_ctx_new ();
+    void *frontend = zmq_socket (ctx, ZMQ_DEALER);
+    zsock_bind (frontend, "tcp://*:5555");
+    void *backend = zmq_socket (ctx, ZMQ_DEALER);
+    zsock_bind (backend, "tcp://*:5556");
     zmq_proxy (frontend, backend, NULL);
-    zctx_destroy (&ctx);
+    zmq_ctx_destroy (&ctx);
     return NULL;
 }
 
@@ -83,7 +83,7 @@ broker_task (void *args)
 int main (void)
 {
     //  Create threads
-    zctx_t *ctx = zctx_new ();
+    zrex_t *ctx = zmq_ctx_new ();
     void *client = zthread_fork (ctx, client_task, NULL);
     zthread_new (worker_task, NULL);
     zthread_new (broker_task, NULL);
@@ -92,6 +92,6 @@ int main (void)
     char *signal = zstr_recv (client);
     free (signal);
 
-    zctx_destroy (&ctx);
+    zmq_ctx_destroy (&ctx);
     return 0;
 }

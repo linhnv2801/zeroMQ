@@ -10,12 +10,12 @@
 //  Structure of our class
 
 struct _clone_t {
-    zctx_t *ctx;                //  Our context wrapper
+    zrex_t *ctx;                //  Our context wrapper
     void *pipe;                 //  Pipe through to clone agent
 };
 
 //  This is the thread that handles our real clone class
-static void clone_agent (void *args, zctx_t *ctx, void *pipe);
+static void clone_agent (void *args, zrex_t *ctx, void *pipe);
 
 //  .split constructor and destructor
 //  Here are the constructor and destructor for the clone class. Note that
@@ -29,7 +29,7 @@ clone_new (void)
         *self;
 
     self = (clone_t *) zmalloc (sizeof (clone_t));
-    self->ctx = zctx_new ();
+    self->ctx = zmq_ctx_new ();
     self->pipe = zthread_fork (self->ctx, clone_agent, NULL);
     return self;
 }
@@ -40,7 +40,7 @@ clone_destroy (clone_t **self_p)
     assert (self_p);
     if (*self_p) {
         clone_t *self = *self_p;
-        zctx_destroy (&self->ctx);
+        zmq_ctx_destroy (&self->ctx);
         free (self);
         *self_p = NULL;
     }
@@ -133,7 +133,7 @@ typedef struct {
 } server_t;
 
 static server_t *
-server_new (zctx_t *ctx, char *address, int port, char *subtree)
+server_new (zrex_t *ctx, char *address, int port, char *subtree)
 {
     server_t *self = (server_t *) zmalloc (sizeof (server_t));
 
@@ -141,10 +141,10 @@ server_new (zctx_t *ctx, char *address, int port, char *subtree)
     self->address = strdup (address);
     self->port = port;
 
-    self->snapshot = zsocket_new (ctx, ZMQ_DEALER);
-    zsocket_connect (self->snapshot, "%s:%d", address, port);
-    self->subscriber = zsocket_new (ctx, ZMQ_SUB);
-    zsocket_connect (self->subscriber, "%s:%d", address, port + 1);
+    self->snapshot = zmq_socket (ctx, ZMQ_DEALER);
+    zmq_connect (self->snapshot, "%s:%d", address, port);
+    self->subscriber = zmq_socket (ctx, ZMQ_SUB);
+    zmq_connect (self->subscriber, "%s:%d", address, port + 1);
     zsocket_set_subscribe (self->subscriber, subtree);
     zsocket_set_subscribe (self->subscriber, "HUGZ");
     return self;
@@ -177,7 +177,7 @@ server_destroy (server_t **self_p)
 #define STATE_ACTIVE        2   //  Getting new updates from server
 
 typedef struct {
-    zctx_t *ctx;                //  Context wrapper
+    zrex_t *ctx;                //  Context wrapper
     void *pipe;                 //  Pipe back to application
     zhash_t *kvmap;             //  Actual key/value table
     char *subtree;              //  Subtree specification, if any
@@ -190,7 +190,7 @@ typedef struct {
 } agent_t;
 
 static agent_t *
-agent_new (zctx_t *ctx, void *pipe)
+agent_new (zrex_t *ctx, void *pipe)
 {
     agent_t *self = (agent_t *) zmalloc (sizeof (agent_t));
     self->ctx = ctx;
@@ -198,7 +198,7 @@ agent_new (zctx_t *ctx, void *pipe)
     self->kvmap = zhash_new ();
     self->subtree = strdup ("");
     self->state = STATE_INITIAL;
-    self->publisher = zsocket_new (self->ctx, ZMQ_PUB);
+    self->publisher = zmq_socket (self->ctx, ZMQ_PUB);
     return self;
 }
 
@@ -242,7 +242,7 @@ agent_control_message (agent_t *self)
             self->server [self->nbr_servers++] = server_new (
                 self->ctx, address, atoi (service), self->subtree);
             //  We broadcast updates to all known servers
-            zsocket_connect (self->publisher, "%s:%d",
+            zmq_connect (self->publisher, "%s:%d",
                 address, atoi (service) + 2);
         }
         else
@@ -292,7 +292,7 @@ agent_control_message (agent_t *self)
 //  request-reply dialog when the application asks for it:
 
 static void
-clone_agent (void *args, zctx_t *ctx, void *pipe)
+clone_agent (void *args, zrex_t *ctx, void *pipe)
 {
     agent_t *self = agent_new (ctx, pipe);
 

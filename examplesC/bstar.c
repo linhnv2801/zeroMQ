@@ -22,7 +22,7 @@ typedef enum {
 //  Structure of our class
 
 struct _bstar_t {
-    zctx_t *ctx;                //  Our private context
+    zrex_t *ctx;                //  Our private context
     zloop_t *loop;              //  Reactor loop
     void *statepub;             //  State publisher
     void *statesub;             //  State subscriber
@@ -212,18 +212,18 @@ bstar_new (int primary, char *local, char *remote)
     self = (bstar_t *) zmalloc (sizeof (bstar_t));
 
     //  Initialize the Binary Star
-    self->ctx = zctx_new ();
+    self->ctx = zmq_ctx_new ();
     self->loop = zloop_new ();
     self->state = primary? STATE_PRIMARY: STATE_BACKUP;
 
     //  Create publisher for state going to peer
-    self->statepub = zsocket_new (self->ctx, ZMQ_PUB);
-    zsocket_bind (self->statepub, local);
+    self->statepub = zmq_socket (self->ctx, ZMQ_PUB);
+    zsock_bind (self->statepub, local);
 
     //  Create subscriber for state coming from peer
-    self->statesub = zsocket_new (self->ctx, ZMQ_SUB);
+    self->statesub = zmq_socket (self->ctx, ZMQ_SUB);
     zsocket_set_subscribe (self->statesub, "");
-    zsocket_connect (self->statesub, remote);
+    zmq_connect (self->statesub, remote);
 
     //  Set-up basic reactor events
     zloop_timer (self->loop, BSTAR_HEARTBEAT, 0, s_send_state, self);
@@ -242,7 +242,7 @@ bstar_destroy (bstar_t **self_p)
     if (*self_p) {
         bstar_t *self = *self_p;
         zloop_destroy (&self->loop);
-        zctx_destroy (&self->ctx);
+        zmq_ctx_destroy (&self->ctx);
         free (self);
         *self_p = NULL;
     }
@@ -269,8 +269,8 @@ bstar_voter (bstar_t *self, char *endpoint, int type, zloop_fn handler,
              void *arg)
 {
     //  Hold actual handler+arg so we can call this later
-    void *socket = zsocket_new (self->ctx, type);
-    zsocket_bind (socket, endpoint);
+    void *socket = zmq_socket (self->ctx, type);
+    zsock_bind (socket, endpoint);
     assert (!self->voter_fn);
     self->voter_fn = handler;
     self->voter_arg = arg;

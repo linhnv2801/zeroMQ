@@ -5,12 +5,12 @@
 
 int main (int argc, char *argv [])
 {
-    zctx_t *context = zctx_new ();
-    void *publisher = zsocket_new (context, ZMQ_PUB);
+    zrex_t *context = zmq_ctx_new ();
+    void *publisher = zmq_socket (context, ZMQ_PUB);
     if (argc == 2)
-        zsocket_bind (publisher, argv [1]);
+        zsock_bind (publisher, argv [1]);
     else
-        zsocket_bind (publisher, "tcp://*:5556");
+        zsock_bind (publisher, "tcp://*:5556");
 
     //  Ensure subscriber connection has time to complete
     sleep (1);
@@ -28,6 +28,6 @@ int main (int argc, char *argv [])
         zstr_sendfm (publisher, "%03d", randof (1000));
         zstr_send (publisher, "Off with his head!");
     }
-    zctx_destroy (&context);
+    zmq_ctx_destroy (&context);
     return 0;
 }

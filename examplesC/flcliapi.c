@@ -20,12 +20,12 @@
 //  Structure of our frontend class
 
 struct _flcliapi_t {
-    zctx_t *ctx;        //  Our context wrapper
+    zrex_t *ctx;        //  Our context wrapper
     void *pipe;         //  Pipe through to flcliapi agent
 };
 
 //  This is the thread that handles our real flcliapi class
-static void flcliapi_agent (void *args, zctx_t *ctx, void *pipe);
+static void flcliapi_agent (void *args, zrex_t *ctx, void *pipe);
 
 //  Constructor
 
@@ -36,7 +36,7 @@ flcliapi_new (void)
         *self;
 
     self = (flcliapi_t *) zmalloc (sizeof (flcliapi_t));
-    self->ctx = zctx_new ();
+    self->ctx = zmq_ctx_new ();
     self->pipe = zthread_fork (self->ctx, flcliapi_agent, NULL);
     return self;
 }
@@ -49,7 +49,7 @@ flcliapi_destroy (flcliapi_t **self_p)
     assert (self_p);
     if (*self_p) {
         flcliapi_t *self = *self_p;
-        zctx_destroy (&self->ctx);
+        zmq_ctx_destroy (&self->ctx);
         free (self);
         *self_p = NULL;
     }
@@ -165,7 +165,7 @@ server_tickless (const char *key, void *server, void *arg)
 //  Simple class for one background agent
 
 typedef struct {
-    zctx_t *ctx;                //  Own context
+    zrex_t *ctx;                //  Own context
     void *pipe;                 //  Socket to talk back to application
     void *router;               //  Socket to talk to servers
     zhash_t *servers;           //  Servers we've connected to
@@ -177,12 +177,12 @@ typedef struct {
 } agent_t;
 
 agent_t *
-agent_new (zctx_t *ctx, void *pipe)
+agent_new (zrex_t *ctx, void *pipe)
 {
     agent_t *self = (agent_t *) zmalloc (sizeof (agent_t));
     self->ctx = ctx;
     self->pipe = pipe;
-    self->router = zsocket_new (self->ctx, ZMQ_ROUTER);
+    self->router = zmq_socket (self->ctx, ZMQ_ROUTER);
     self->servers = zhash_new ();
     self->actives = zlist_new ();
     return self;
@@ -290,7 +290,7 @@ agent_router_message (agent_t *self)
 //  and processes incoming messages:
 
 static void
-flcliapi_agent (void *args, zctx_t *ctx, void *pipe)
+flcliapi_agent (void *args, zrex_t *ctx, void *pipe)
 {
     agent_t *self = agent_new (ctx, pipe);
 

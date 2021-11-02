@@ -7,11 +7,11 @@
 
 int main (void)
 {
-    zctx_t *ctx = zctx_new ();
-    void *frontend = zsocket_new (ctx, ZMQ_ROUTER);
-    void *backend = zsocket_new (ctx, ZMQ_ROUTER);
-    zsocket_bind (frontend, "tcp://*:5555");    //  For clients
-    zsocket_bind (backend,  "tcp://*:5556");    //  For workers
+    zrex_t *ctx = zmq_ctx_new ();
+    void *frontend = zmq_socket (ctx, ZMQ_ROUTER);
+    void *backend = zmq_socket (ctx, ZMQ_ROUTER);
+    zsock_bind (frontend, "tcp://*:5555");    //  For clients
+    zsock_bind (backend,  "tcp://*:5556");    //  For workers
 
     //  Queue of available workers
     zlist_t *workers = zlist_new ();
@@ -59,7 +59,7 @@ int main (void)
         zframe_destroy (&frame);
     }
     zlist_destroy (&workers);
-    zctx_destroy (&ctx);
+    zmq_ctx_destroy (&ctx);
     return 0;
     //  .until
 }

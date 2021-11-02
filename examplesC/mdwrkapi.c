@@ -14,7 +14,7 @@
 //  We access these properties only via class methods
 
 struct _mdwrk_t {
-    zctx_t *ctx;                //  Our context
+    zrex_t *ctx;                //  Our context
     char *broker;
     char *service;
     void *worker;               //  Socket to broker
@@ -63,8 +63,8 @@ s_mdwrk_send_to_broker (mdwrk_t *self, char *command, char *option,
 void s_mdwrk_connect_to_broker (mdwrk_t *self)
 {
     if (self->worker)
-        zsocket_destroy (self->ctx, self->worker);
-    self->worker = zsocket_new (self->ctx, ZMQ_DEALER);
+        zmq_close (self->ctx, self->worker);
+    self->worker = zmq_socket (self->ctx, ZMQ_DEALER);
     zmq_connect (self->worker, self->broker);
     if (self->verbose)
         zclock_log ("I: connecting to broker at %s...", self->broker);
@@ -89,7 +89,7 @@ mdwrk_new (char *broker,char *service, int verbose)
     assert (service);
 
     mdwrk_t *self = (mdwrk_t *) zmalloc (sizeof (mdwrk_t));
-    self->ctx = zctx_new ();
+    self->ctx = zmq_ctx_new ();
     self->broker = strdup (broker);
     self->service = strdup (service);
     self->verbose = verbose;
@@ -108,7 +108,7 @@ mdwrk_destroy (mdwrk_t **self_p)
     assert (self_p);
     if (*self_p) {
         mdwrk_t *self = *self_p;
-        zctx_destroy (&self->ctx);
+        zmq_ctx_destroy (&self->ctx);
         free (self->broker);
         free (self->service);
         free (self);

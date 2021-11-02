@@ -15,7 +15,7 @@ derp (char *s)
 
 int main (void)
 {
-    zctx_t *ctx = zctx_new ();
+    zrex_t *ctx = zmq_ctx_new ();
 
     //  Create UDP socket
     int fd;
@@ -78,6 +78,6 @@ int main (void)
         }
     }
     close (fd);
-    zctx_destroy (&ctx);
+    zmq_ctx_destroy (&ctx);
     return 0;
 }

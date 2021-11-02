@@ -520,11 +520,11 @@ kvmsg_test (int verbose)
     printf (" * kvmsg: ");
 
     //  Prepare our context and sockets
-    zctx_t *ctx = zctx_new ();
-    void *output = zsocket_new (ctx, ZMQ_DEALER);
+    zrex_t *ctx = zmq_ctx_new ();
+    void *output = zmq_socket (ctx, ZMQ_DEALER);
     int rc = zmq_bind (output, "ipc://kvmsg_selftest.ipc");
     assert (rc == 0);
-    void *input = zsocket_new (ctx, ZMQ_DEALER);
+    void *input = zmq_socket (ctx, ZMQ_DEALER);
     rc = zmq_connect (input, "ipc://kvmsg_selftest.ipc");
     assert (rc == 0);
 
@@ -570,7 +570,7 @@ kvmsg_test (int verbose)
     //  .skip
     //  Shutdown and destroy all objects
     zhash_destroy (&kvmap);
-    zctx_destroy (&ctx);
+    zmq_ctx_destroy (&ctx);
 
     printf ("OK\n");
     return 0;

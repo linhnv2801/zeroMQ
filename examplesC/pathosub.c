@@ -5,12 +5,12 @@
 
 int main (int argc, char *argv [])
 {
-    zctx_t *context = zctx_new ();
-    void *subscriber = zsocket_new (context, ZMQ_SUB);
+    zrex_t *context = zmq_ctx_new ();
+    void *subscriber = zmq_socket (context, ZMQ_SUB);
     if (argc == 2)
-        zsocket_connect (subscriber, argv [1]);
+        zmq_connect (subscriber, argv [1]);
     else
-        zsocket_connect (subscriber, "tcp://localhost:5556");
+        zmq_connect (subscriber, "tcp://localhost:5556");
 
     srandom ((unsigned) time (NULL));
     char subscription [5];
@@ -27,6 +27,6 @@ int main (int argc, char *argv [])
         free (topic);
         free (data);
     }
-    zctx_destroy (&context);
+    zmq_ctx_destroy (&context);
     return 0;
 }

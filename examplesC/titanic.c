@@ -52,7 +52,7 @@ s_reply_filename (char *uuid) {
 //  up the reply asynchronously using the {{titanic.reply}} service:
 
 static void
-titanic_request (void *args, zctx_t *ctx, void *pipe)
+titanic_request (void *args, zrex_t *ctx, void *pipe)
 {
     mdwrk_t *worker = mdwrk_new (
         "tcp://localhost:5555", "titanic.request", 0);
@@ -183,7 +183,7 @@ static int s_service_success (char *uuid);
 int main (int argc, char *argv [])
 {
     int verbose = (argc > 1 && streq (argv [1], "-v"));
-    zctx_t *ctx = zctx_new ();
+    zrex_t *ctx = zmq_ctx_new ();
 
     void *request_pipe = zthread_fork (ctx, titanic_request, NULL);
     zthread_new (titanic_reply, NULL);
